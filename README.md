@@ -25,6 +25,10 @@ cd reproduce
 make install
 ```
 
+### Note about non-root users
+
+If you want to run Reproduce with a non-root user, you must [configure AppJail to do so](https://appjail.readthedocs.io/en/latest/trusted-users/).
+
 ## Building a Project
 
 ### Build all projects
