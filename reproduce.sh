@@ -86,6 +86,7 @@ BEFORE_MAKEJAILS=
 AFTER_MAKEJAILS=
 MIRRORS=
 DEBUG="NO"
+COMPRESS_ALGO="xz"
 
 main()
 {
@@ -114,9 +115,9 @@ main()
         exit ${EX_UNAVAILABLE}
     fi
 
-    while getopts ":bdhvA:B:c:j:l:m:p:r:" _o; do
+    while getopts ":bdhvA:B:C:c:j:l:m:p:r:" _o; do
         case "${_o}" in
-            A|B|c|j|l|m|p|r)
+            A|B|C|c|j|l|m|p|r)
                 if [ -z "${OPTARG}" ]; then
                     usage
                     exit ${EX_USAGE}
@@ -144,6 +145,9 @@ main()
                 ;;
             B)
                 BEFORE_MAKEJAILS="${OPTARG}"
+                ;;
+            C)
+                COMPRESS_ALGO="${OPTARG}"
                 ;;
             c)
                 CONFIG="${OPTARG}"
@@ -660,7 +664,7 @@ main()
 
                 local init_export_time=`date +"%s"`
 
-                if appjail image export -f -t "${tag}" -n "${reproduce_name}" -- "${reproduce_jail_name}" >> "${logfile}" 2>&1; then
+                if appjail image export -f -c "${COMPRESS_ALGO}" -t "${tag}" -n "${reproduce_name}" -- "${reproduce_jail_name}" >> "${logfile}" 2>&1; then
                     total_hits=$((total_hits+1))
                 else
                     err "Error exporting '${reproduce_name}'"
@@ -755,9 +759,9 @@ usage()
     cat << EOF
 usage: appjail-reproduce -h
        appjail-reproduce -v
-       appjail-reproduce -b [-d] [-A include_files] [-B include_files] [-c config]
-                         [-j prefix] [-l logsdir] [-m mirrors] [-p projectsdir]
-                         [project[%arch1,archN][:tag1,tagN] ...]
+       appjail-reproduce -b [-d] [-A include_files] [-B include_files] [-C compress]
+                         [-c config] [-j prefix] [-l logsdir] [-m mirrors]
+                         [-p projectsdir] [project[%arch1,archN][:tag1,tagN] ...]
 EOF
 }
 
@@ -779,6 +783,7 @@ Options:
     -d                      -- Enable debug logging.
     -A include_files        -- List of Makejails to include after the main instructions.
     -B include_files        -- List of Makejails to include before the main instructions.
+    -C compress             -- Compress the images using this algorithm.
     -c config               -- Configuration file.
     -j prefix               -- Jail prefix.
     -l logsdir              -- Logs directory.

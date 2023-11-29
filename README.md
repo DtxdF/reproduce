@@ -145,6 +145,14 @@ Parameters can be configured via command-line flags or from the configuration fi
 
 **description**: Enable debug logging.
 
+#### COMPRESS\_ALGO
+
+**default**: `xz`
+
+**command-line flag**: `-C`
+
+**description**: Compress the images using this algorithm.
+
 ## Creating a Project
 
 ### Parameters
