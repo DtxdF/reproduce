@@ -219,6 +219,38 @@ You can specify a list of files to remove using a file named `toremove.lst` in t
 
 If you need more control, you can use a hook, a script named `hook.sh` that will run before creating the image. The hook runs in the jails directory (`JAILDIR` in your AppJail configuration file), but on the host, not inside the jail.
 
+### Environment
+
+Reproduce will define some environment variables when building an image intended to be used by `reproduce.conf`, the Makejail or the hook.
+
+#### REPRODUCE\_PROJECT
+
+**description**: Project name.
+
+#### REPRODUCE\_PROJECTDIR
+
+**description**: Project directory.
+
+#### REPRODUCE\_JAIL\_NAME
+
+**description**: Jail name.
+
+#### REPRODUCE\_OSRELEASE
+
+**description**: OS release.
+
+#### REPRODUCE\_OSARCH
+
+**description**: OS architecture.
+
+#### REPRODUCE\_OSVERSION
+
+**description**: OS version.
+
+#### REPRODUCE\_TAG
+
+**description**: Tag name.
+
 ### Sample Project
 
 ```
