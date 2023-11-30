@@ -286,6 +286,56 @@ arch: amd64
 * Before creating an image, Reproduce will remove it, so backup the image if you want to keep it.
 * All jails explicitly created by Reproduce will be named using a random UUID (version 4) and `JAIL_PREFIX`. Reproduce will stop and remove the jail when necessary.
 
+## Recommendations
+
+### Set threads for XZ & ZSTD
+
+**/usr/local/etc/appjail/appjail.conf**:
+
+```
+TAR_XZ_ARGS="--xz --options xz:threads=0"
+TAR_ZSTD_ARGS="--zstd --options zstd:threads=0"
+```
+
+### PkgCache
+
+```sh
+appjail makejail -j pkgcache -f gh+AppJail-makejails/pkgcache
+```
+
+**~/.config/appjail-reproduce/config.conf**:
+
+```
+BEFORE_MAKEJAILS=/root/reproduce/main.makejail
+```
+
+**/root/reproduce/main.makejail**:
+
+```
+INCLUDE pkg.makejail
+```
+
+**/root/reproduce/pkg.makejail**:
+
+```
+CMD mkdir -p /usr/local/etc/pkg/repos
+COPY Mirror.conf /usr/local/etc/pkg/repos
+```
+
+**/root/reproduce/Mirror.conf**:
+
+```
+FreeBSD: {
+  url: "http://pkgcache/${ABI}/latest",
+  mirror_type: "http",
+  signature_type: "fingerprints",
+  fingerprints: "/usr/share/keys/pkg",
+  enabled: yes
+}
+```
+
+**See also**: https://appjail.readthedocs.io/en/latest/configure/
+
 ## Contributing
 
 If you have found a bug, have an idea or need help, use the [issue tracker](https://github.com/DtxdF/reproduce/issues/new). Of course, PRs are welcome.
