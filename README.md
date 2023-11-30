@@ -300,7 +300,10 @@ TAR_ZSTD_ARGS="--zstd --options zstd:threads=0"
 ### PkgCache
 
 ```sh
-appjail makejail -j pkgcache -f gh+AppJail-makejails/pkgcache
+appjail makejail -j pkgcache -f gh+AppJail-makejails/pkgcache \
+    -o virtualnet=":<random> default" \
+    -o nat
+service appjail-health restart
 ```
 
 **~/.config/appjail-reproduce/config.conf**:
