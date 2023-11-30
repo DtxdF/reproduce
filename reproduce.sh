@@ -35,6 +35,8 @@ VERSION="0.1.0"
 LAST_EXIT_STATUS=0
 # Used by sig_handler_remove_last_jail.
 LAST_JAIL=
+# Used by sig_handler_terminate_last_pid.
+LAST_PIDS=
 # Used by sig_handler_remove_lock.
 REMOVE_LOCK="NO"
 
@@ -77,6 +79,10 @@ CONFIG="${HOMEDIR}/.config/appjail-reproduce/config.conf"
 # Reproduce directory prefix.
 REPRODUCEDIR="${HOMEDIR}/.reproduce"
 
+# Signals.
+IGNORED_SIGNALS="SIGALRM SIGVTALRM SIGPROF SIGUSR1 SIGUSR2"
+HANDLER_SIGNALS="SIGHUP SIGINT SIGQUIT SIGTERM SIGXCPU SIGXFSZ"
+
 # Defaults.
 PROJECTSDIR="${REPRODUCEDIR}/projects"
 LOGSDIR="${REPRODUCEDIR}/logs"
@@ -95,7 +101,11 @@ main()
     local opt_check_config=0
     local errlevel
 
-    trap 'LAST_EXIT_STATUS=$?; sig_handler' SIGINT SIGQUIT SIGTERM EXIT
+    set -T
+
+    trap '' ${IGNORED_SIGNALS}
+    trap 'sig_handler; exit 70' ${HANDLER_SIGNALS}
+    trap 'LAST_EXIT_STATUS=$?; sig_handler; exit ${LAST_EXIT_STATUS}' EXIT
 
     if [ $# -eq 0 ]; then
         usage
@@ -463,10 +473,10 @@ main()
         reproduce_release="${reproduce_release:-default}"
         export REPRODUCE_OSRELEASE="${reproduce_release}"
 
-        if appjail image get -- "${reproduce_name}" name > /dev/null 2>&1; then
+        if trace_exc appjail image get -- "${reproduce_name}" name > /dev/null 2>&1; then
             debug "Removing image '${reproduce_name}'"
 
-            if ! appjail image remove -- "${reproduce_name}"; then
+            if ! trace_exc appjail image remove -- "${reproduce_name}"; then
                 err "Error removing image '${reproduce_name}'"
                 total_errors=$((total_errors+1))
                 continue
@@ -598,7 +608,7 @@ main()
 
                 local init_makejail_time=`date +"%s"`
 
-                eval appjail makejail \
+                eval trace_exc appjail makejail \
                     -j "${reproduce_jail_name}" \
                     -f "${makejail}" \
                     ${osversion_arg} \
@@ -626,7 +636,7 @@ main()
                     while IFS= read -r file; do
                         info "Removing: rm ${file}" 2>&1 | tee -a "${logfile}" >&2
 
-                        if ! appjail cmd local "${reproduce_jail_name}" sh -c "rm ${file}"; then
+                        if ! trace_exc appjail cmd local "${reproduce_jail_name}" sh -c "rm ${file}"; then
                             warn "Error removing ${file}" 2>&1 | tee -a "${logfile}" >&2
                         fi
                     done < "${projectdir}/toremove.lst"
@@ -637,7 +647,7 @@ main()
                 for rc_var in ${remove_rc_vars}; do
                     info "Removing rc variable: ${rc_var}" 2>&1 | tee -a "${logfile}" >&2
 
-                    appjail cmd local "${reproduce_jail_name}" sysrc -f etc/rc.conf -ix -- "${rc_var}" 2>&1 | tee -a "${logfile}" >&2
+                    trace_exc appjail cmd local "${reproduce_jail_name}" sysrc -f etc/rc.conf -ix -- "${rc_var}" 2>&1 | tee -a "${logfile}" >&2
                 done
 
                 local hook="${projectdir}/hook.sh"
@@ -651,7 +661,7 @@ main()
 
                     info "Executing hook" 2>&1 | tee -a "${logfile}" >&2
 
-                    appjail cmd jaildir "${hook}" >> "${logfile}" 2>&1
+                    trace_exc appjail cmd jaildir "${hook}" >> "${logfile}" 2>&1
 
                     errlevel=$?
 
@@ -664,7 +674,7 @@ main()
 
                 local init_export_time=`date +"%s"`
 
-                if appjail image export -f -c "${COMPRESS_ALGO}" -t "${tag}" -n "${reproduce_name}" -- "${reproduce_jail_name}" >> "${logfile}" 2>&1; then
+                if trace_exc appjail image export -f -c "${COMPRESS_ALGO}" -t "${tag}" -n "${reproduce_name}" -- "${reproduce_jail_name}" >> "${logfile}" 2>&1; then
                     total_hits=$((total_hits+1))
                 else
                     err "Error exporting '${reproduce_name}'"
@@ -690,7 +700,7 @@ main()
 
                     debug "Adding mirror (tag:${tag}, arch:${arch}): ${mirror}"
 
-                    if ! appjail image metadata set -t "${tag}" -I -- "${reproduce_name}" "source:${arch}+=${mirror}"; then
+                    if ! trace_exc appjail image metadata set -t "${tag}" -I -- "${reproduce_name}" "source:${arch}+=${mirror}"; then
                         err "Error adding mirror: ${mirror}"
                         total_errors=$((total_errors+1))
                     fi
@@ -722,15 +732,14 @@ getvalue()
 
 sig_handler()
 {
-    trap "" SIGINT SIGQUIT SIGTERM EXIT
+    trap '' ${HANDLER_SIGNALS} EXIT
 
     sig_handler_unset_IFS
+    sig_handler_terminate_last_pid
     sig_handler_remove_last_jail
     sig_handler_remove_lock
 
-    trap - SIGINT SIGQUIT SIGTERM EXIT
-
-    exit ${LAST_EXIT_STATUS}
+    trap - ${HANDLER_SIGNALS} ${IGNORED_SIGNALS} EXIT
 }
 
 sig_handler_unset_IFS()
@@ -747,10 +756,54 @@ sig_handler_remove_lock()
     fi
 }
 
+sig_handler_terminate_last_pid()
+{
+    if [ -n "${LAST_PIDS}" ]; then
+        local pid
+
+        for pid in ${LAST_PIDS}; do
+            safe_kill ${pid}
+        done
+    fi
+}
+
 sig_handler_remove_last_jail()
 {
     if [ -n "${LAST_JAIL}" ]; then
         stop_and_destroy_jail "${LAST_JAIL}"
+    fi
+}
+
+trace_exc()
+{
+    local pid
+
+    "$@" &
+
+    pid=$!
+
+    LAST_PIDS="${LAST_PIDS} ${pid}"
+
+    wait ${pid}
+}
+
+safe_kill()
+{
+	local pid
+
+	pid=$1
+
+	if [ -z "${pid}" ]; then
+		echo "safe_kill pid"
+		exit ${EX_USAGE}
+	fi
+
+    appjail cmd jaildir kill ${pid} > /dev/null 2>&1
+
+    appjail cmd jaildir pwait -o -t 30 ${pid} > /dev/null 2>&1
+
+    if [ $? -eq 124 ]; then
+        warn "Timeout has been reached, pid ${pid} is still running!"
     fi
 }
 
