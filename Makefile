@@ -4,7 +4,7 @@ SED?=sed -i ''
 RM?=rm -f
 PREFIX?=/usr/local
 
-REPRODUCE_VERSION=0.2.0
+REPRODUCE_VERSION=0.2.1
 
 all: install
 
