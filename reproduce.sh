@@ -798,13 +798,35 @@ safe_kill()
 		exit ${EX_USAGE}
 	fi
 
-    appjail cmd jaildir kill ${pid} > /dev/null 2>&1
+    local ppid=`get_ppid ${pid}`
 
-    appjail cmd jaildir pwait -o -t 30 ${pid} > /dev/null 2>&1
-
-    if [ $? -eq 124 ]; then
-        warn "Timeout has been reached, pid ${pid} is still running!"
+    # Process does not exist.
+    if [ -z "${ppid}" ]; then
+        return
     fi
+
+    local expected_pid=$$
+    
+    if [ ${ppid} -eq ${expected_pid} ]; then
+        appjail cmd jaildir kill ${pid} > /dev/null 2>&1
+
+        appjail cmd jaildir pwait -o -t 30 ${pid} > /dev/null 2>&1
+
+        if [ $? -eq 124 ]; then
+            warn "Timeout has been reached, pid ${pid} is still running!"
+        fi
+    fi
+}
+
+get_ppid()
+{
+    local pid="$1"
+    if [ -z "${pid}" ]; then
+        echo "usage: get_pid pid"
+        exit ${EX_USAGE}
+    fi
+
+    appjail cmd jaildir ps -p "${pid}" -o ppid | grep -v PPID | awk '{print $1}'
 }
 
 usage()
