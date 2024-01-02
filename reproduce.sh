@@ -98,6 +98,7 @@ main()
 {
     local _o
     local opt_build=0
+    local opt_force=0
     local opt_check_config=0
     local errlevel
 
@@ -125,7 +126,7 @@ main()
         exit ${EX_UNAVAILABLE}
     fi
 
-    while getopts ":bdhvA:B:C:c:j:l:m:p:r:" _o; do
+    while getopts ":bdfhvA:B:C:c:j:l:m:p:r:" _o; do
         case "${_o}" in
             A|B|C|c|j|l|m|p|r)
                 if [ -z "${OPTARG}" ]; then
@@ -141,6 +142,9 @@ main()
                 ;;
             d)
                 DEBUG="YES"
+                ;;
+            f)
+                opt_force=1
                 ;;
             h)
                 help
@@ -375,6 +379,22 @@ main()
         if [ ! -d "${rundir}" ]; then
             debug "Creating run directory '${rundir}'"
             if ! safe_exc mkdir -p -- "${rundir}"; then
+                total_errors=$((total_errors+1))
+                continue
+            fi
+        fi
+
+        local done_file="${rundir}/done"
+
+        if [ -f "${done_file}" ] && [ ${opt_force} -eq 0 ]; then
+            info "Project '${project}' is marked as completed."
+            total_hits=$((total_hits+1))
+            continue
+        fi
+
+        if [ -f "${done_file}" ]; then
+            debug "Removing 'done' file"
+            if ! safe_exc rm -f -- "${done_file}"; then
                 total_errors=$((total_errors+1))
                 continue
             fi
@@ -705,6 +725,8 @@ main()
                         total_errors=$((total_errors+1))
                     fi
                 done
+
+                safe_exc touch -- "${rundir}/done" || exit $?
             done
         done
     done
@@ -834,7 +856,7 @@ usage()
     cat << EOF
 usage: appjail-reproduce -h
        appjail-reproduce -v
-       appjail-reproduce -b [-d] [-A include_files] [-B include_files] [-C compress]
+       appjail-reproduce -b [-df] [-A include_files] [-B include_files] [-C compress]
                          [-c config] [-j prefix] [-l logsdir] [-m mirrors]
                          [-p projectsdir] [project[%arch1,archN][:tag1,tagN] ...]
 EOF
@@ -856,6 +878,7 @@ Parameters:
 
 Options:
     -d                      -- Enable debug logging.
+    -f                      -- Build projects, including those marked as completed.
     -A include_files        -- List of Makejails to include after the main instructions.
     -B include_files        -- List of Makejails to include before the main instructions.
     -C compress             -- Compress the images using this algorithm.
