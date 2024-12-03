@@ -664,7 +664,7 @@ main()
 
                 local rc_var
 
-                for rc_var in ${remove_rc_vars}; do
+                for rc_var in ${reproduce_remove_rc_vars}; do
                     info "Removing rc variable: ${rc_var}" 2>&1 | tee -a "${logfile}" >&2
 
                     trace_exc appjail cmd local "${reproduce_jail_name}" sysrc -f etc/rc.conf -ix -- "${rc_var}" 2>&1 | tee -a "${logfile}" >&2
