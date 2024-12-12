@@ -97,9 +97,11 @@ COMPRESS_ALGO="xz"
 main()
 {
     local _o
+    local images=
     local opt_build=0
     local opt_force=0
     local opt_check_config=0
+    local opt_show_images=0
     local errlevel
 
     set -T
@@ -126,7 +128,7 @@ main()
         exit ${EX_UNAVAILABLE}
     fi
 
-    while getopts ":bdfhvA:B:C:c:j:l:m:p:r:" _o; do
+    while getopts ":bdfhsvA:B:C:c:j:l:m:p:r:" _o; do
         case "${_o}" in
             A|B|C|c|j|l|m|p|r)
                 if [ -z "${OPTARG}" ]; then
@@ -149,6 +151,9 @@ main()
             h)
                 help
                 exit ${EX_USAGE}
+                ;;
+            s)
+                opt_show_images=1
                 ;;
             v)
                 version
@@ -482,6 +487,13 @@ main()
         fi
 
         reproduce_name="${reproduce_name:-${project}}"
+
+        if [ -z "${images}" ]; then
+            images="${reproduce_name}"
+        else
+            images="${images} ${reproduce_name}"
+        fi
+
         reproduce_version=`freebsd-version | grep -Eo '[0-9]+\.[0-9]+-[a-zA-Z0-9]+'`
         reproduce_tags="${reproduce_tags:-latest/${reproduce_version}}"
         reproduce_arch="${reproduce_arch:-`uname -p`}"
@@ -740,6 +752,10 @@ main()
     info "Build time: `calc_build_time ${init_build_time}`"
     info "Hits: ${total_hits}"
     info "Errors: ${total_errors}"
+
+    if [ ${opt_show_images} -eq 1 ]; then
+        stdout "${images}"
+    fi
 }
 
 getkey()
@@ -811,14 +827,14 @@ trace_exc()
 
 safe_kill()
 {
-	local pid
+    local pid
 
-	pid=$1
+    pid=$1
 
-	if [ -z "${pid}" ]; then
-		echo "safe_kill pid"
-		exit ${EX_USAGE}
-	fi
+    if [ -z "${pid}" ]; then
+        echo "safe_kill pid"
+        exit ${EX_USAGE}
+    fi
 
     local ppid=`get_ppid ${pid}`
 
@@ -879,6 +895,7 @@ Parameters:
 Options:
     -d                      -- Enable debug logging.
     -f                      -- Build projects, including those marked as completed.
+    -s                      -- Show a space-separated list of images after building them.
     -A include_files        -- List of Makejails to include after the main instructions.
     -B include_files        -- List of Makejails to include before the main instructions.
     -C compress             -- Compress the images using this algorithm.
