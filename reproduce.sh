@@ -756,6 +756,12 @@ main()
     if [ ${opt_show_images} -eq 1 ]; then
         stdout "${images}"
     fi
+
+    if [ ${total_errors} -eq 0 ]; then
+        exit ${EX_OK}
+    else
+        exit ${EX_SOFTWARE}
+    fi
 }
 
 getkey()
