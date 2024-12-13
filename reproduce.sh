@@ -878,7 +878,7 @@ usage()
     cat << EOF
 usage: appjail-reproduce -h
        appjail-reproduce -v
-       appjail-reproduce -b [-df] [-A include_files] [-B include_files] [-C compress]
+       appjail-reproduce -b [-dfs] [-A include_files] [-B include_files] [-C compress]
                          [-c config] [-j prefix] [-l logsdir] [-m mirrors]
                          [-p projectsdir] [project[%arch1,archN][:tag1,tagN] ...]
 EOF
