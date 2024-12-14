@@ -38,7 +38,7 @@ LAST_JAIL=
 # Used by sig_handler_terminate_last_pid.
 LAST_PIDS=
 # Used by sig_handler_remove_lock.
-REMOVE_LOCK="NO"
+LOCKS=
 
 # Colors
 COLOR_DEFAULT="\033[39;49m"
@@ -261,12 +261,6 @@ main()
         exit ${Ex_NOPERM}
     fi
 
-    debug "Locking ..."
-
-    REMOVE_LOCK="YES"
-
-    safe_exc touch -- "${RUNDIR}/lock" || exit $?
-
     local makejail after_makejails_args=
 
     for makejail in ${AFTER_MAKEJAILS}; do
@@ -395,6 +389,23 @@ main()
             info "Project '${project}' is marked as completed."
             total_hits=$((total_hits+1))
             continue
+        fi
+
+        local lock_file="${rundir}/lock"
+
+        if [ -f "${lock_file}" ]; then
+            err "Project '${project}' is locked!"
+            err "If you are sure that project '${project}' is not being used by another process, run 'rm -f \"${lock_file}\"'"
+            total_errors=$((total_errors+1))
+            continue
+        else
+            LOCKS="${LOCKS} ${project}"
+
+            debug "Locking '${project}'"
+            if ! safe_exc touch -- "${lock_file}"; then
+                total_errors=$((total_errors+1))
+                continue
+            fi
         fi
 
         if [ -f "${done_file}" ]; then
@@ -793,10 +804,21 @@ sig_handler_unset_IFS()
 
 sig_handler_remove_lock()
 {
-    if checkyesno "REMOVE_LOCK" "${REMOVE_LOCK}" && [ -f "${RUNDIR}/lock" ]; then
-        debug "Unlocking ..."
+    if [ -n "${LOCKS}" ]; then
+        local project
 
-        rm -f -- "${RUNDIR}/lock"
+        for project in ${LOCKS}; do
+            local lock_file
+            lock_file="${RUNDIR}/${project}/lock"
+
+            if [ ! -f "${lock_file}" ]; then
+                continue
+            fi
+
+            debug "Unlocking '${project}' ..."
+
+            rm -f -- "${RUNDIR}/${project}/lock"
+        done
     fi
 }
 
