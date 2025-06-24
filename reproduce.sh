@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2023-2024, Jesús Daniel Colmenares Oviedo <DtxdF@disroot.org>
+# Copyright (c) 2023-2025, Jesús Daniel Colmenares Oviedo <DtxdF@disroot.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -87,6 +87,7 @@ HANDLER_SIGNALS="SIGHUP SIGINT SIGQUIT SIGTERM SIGXCPU SIGXFSZ"
 PROJECTSDIR="${REPRODUCEDIR}/projects"
 LOGSDIR="${REPRODUCEDIR}/logs"
 RUNDIR="${REPRODUCEDIR}/run"
+LOCKSDIR="/tmp/reproduce/locks"
 JAIL_PREFIX="reproduce_"
 BEFORE_MAKEJAILS=
 AFTER_MAKEJAILS=
@@ -128,9 +129,9 @@ main()
         exit ${EX_UNAVAILABLE}
     fi
 
-    while getopts ":bdfhsvA:B:C:c:j:l:m:p:r:" _o; do
+    while getopts ":bdfhsvA:B:C:c:j:L:l:m:p:r:" _o; do
         case "${_o}" in
-            A|B|C|c|j|l|m|p|r)
+            A|B|C|c|j|L|l|m|p|r)
                 if [ -z "${OPTARG}" ]; then
                     usage
                     exit ${EX_USAGE}
@@ -174,6 +175,9 @@ main()
                 ;;
             j)
                 JAIL_PREFIX="${OPTARG}"
+                ;;
+            L)
+                LOCKSDIR="${OPTARG}"
                 ;;
             l)
                 LOGSDIR="${OPTARG}"
@@ -255,11 +259,6 @@ main()
     fi
 
     local total_errors=0 total_hits=0 index=1 project
-
-    if [ -f "${RUNDIR}/lock" ]; then
-        err "appjail-reproduce is locked. Use 'rm -f \"${RUNDIR}/lock\"' to remove the lock file."
-        exit ${Ex_NOPERM}
-    fi
 
     local makejail after_makejails_args=
 
@@ -391,7 +390,17 @@ main()
             continue
         fi
 
-        local lock_file="${rundir}/lock"
+        local lockdir="${LOCKSDIR}/${project}"
+
+        if [ ! -d "${lockdir}" ]; then
+            debug "Creating lock directory '${lockdir}'"
+            if ! safe_exc mkdir -p -- "${lockdir}"; then
+                total_errors=$((total_errors+1))
+                continue
+            fi
+        fi
+
+        local lock_file="${lockdir}/lock"
 
         if [ -f "${lock_file}" ]; then
             err "Project '${project}' is locked!"
@@ -809,7 +818,7 @@ sig_handler_remove_lock()
 
         for project in ${LOCKS}; do
             local lock_file
-            lock_file="${RUNDIR}/${project}/lock"
+            lock_file="${LOCKSDIR}/${project}/lock"
 
             if [ ! -f "${lock_file}" ]; then
                 continue
@@ -817,7 +826,7 @@ sig_handler_remove_lock()
 
             debug "Unlocking '${project}' ..."
 
-            rm -f -- "${RUNDIR}/${project}/lock"
+            rm -f -- "${LOCKSDIR}/${project}/lock"
         done
     fi
 }
@@ -901,7 +910,7 @@ usage()
 usage: appjail-reproduce -h
        appjail-reproduce -v
        appjail-reproduce -b [-dfs] [-A include_files] [-B include_files] [-C compress]
-                         [-c config] [-j prefix] [-l logsdir] [-m mirrors]
+                         [-c config] [-j prefix] [-L locksdir] [-l logsdir] [-m mirrors]
                          [-p projectsdir] [project[%arch1,archN][:tag1,tagN] ...]
 EOF
 }
@@ -929,6 +938,7 @@ Options:
     -C compress             -- Compress the images using this algorithm.
     -c config               -- Configuration file.
     -j prefix               -- Jail prefix.
+    -L locksdir             -- Locks directory.
     -l logsdir              -- Logs directory.
     -m mirrors              -- List of mirrors. 
     -p projectsdir          -- Projects directory.

@@ -111,6 +111,14 @@ Parameters can be configured via command-line flags or from the configuration fi
 
 **description**: Directory used by Reproduce to store certain information, such as the lock file and jail names.
 
+#### LOCKSDIR
+
+**default**: `/tmp/reproduce/locks`
+
+**command-line flag**: `-L`
+
+**description**: Directory used by Reproduce to store locks.
+
 #### JAIL\_PREFIX
 
 **default**: `reproduce_`
