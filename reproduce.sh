@@ -87,7 +87,11 @@ HANDLER_SIGNALS="SIGHUP SIGINT SIGQUIT SIGTERM SIGXCPU SIGXFSZ"
 PROJECTSDIR="${REPRODUCEDIR}/projects"
 LOGSDIR="${REPRODUCEDIR}/logs"
 RUNDIR="${REPRODUCEDIR}/run"
-LOCKSDIR="/tmp/reproduce/locks"
+if [ `id -u` -eq 0 ]; then
+    LOCKSDIR="/tmp/reproduce/locks"
+else
+    LOCKSDIR="${REPRODUCEDIR}/locks"
+fi
 JAIL_PREFIX="reproduce_"
 BEFORE_MAKEJAILS=
 AFTER_MAKEJAILS=
