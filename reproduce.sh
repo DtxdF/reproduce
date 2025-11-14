@@ -636,6 +636,26 @@ main()
 
                 stop_and_destroy_jail "${reproduce_jail_name}"
 
+                local prehook="${projectdir}/prehook.sh"
+
+                if [ -f "${prehook}" ]; then
+                    if [ ! -x "${prehook}" ]; then
+                        warn "'${prehook}' prehook does not have the execution bit permission set."
+                        total_errors=$((total_errors+1))
+                        continue
+                    fi
+
+                    info "Executing prehook" 2>&1 | tee -a "${logfile}" >&2
+
+                    trace_exc appjail cmd jaildir "${prehook}" >> "${logfile}" 2>&1
+
+                    errlevel=$?
+
+                    if [ ${errlevel} -ne 0 ]; then
+                        err "Hook exits with a non-zero exit status (${errlevel})." 2>&1 | tee -a "${logfile}" >&2
+                    fi
+                fi
+
                 local osversion_arg=
 
                 if ! checkyesno "ignore_osversion" "${reproduce_ignore_osversion}"; then
