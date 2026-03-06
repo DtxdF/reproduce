@@ -1,0 +1,181 @@
+.\"Copyright (c) 2026, Jesús Daniel Colmenares Oviedo <DtxdF@disroot.org>
+.\"All rights reserved.
+.\"
+.\"Redistribution and use in source and binary forms, with or without
+.\"modification, are permitted provided that the following conditions are met:
+.\"
+.\"* Redistributions of source code must retain the above copyright notice, this
+.\"  list of conditions and the following disclaimer.
+.\"
+.\"* Redistributions in binary form must reproduce the above copyright notice,
+.\"  this list of conditions and the following disclaimer in the documentation
+.\"  and/or other materials provided with the distribution.
+.\"
+.\"* Neither the name of the copyright holder nor the names of its
+.\"  contributors may be used to endorse or promote products derived from
+.\"  this software without specific prior written permission.
+.\"
+.\"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+.\"AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\"IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\"DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+.\"FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\"DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\"SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\"CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\"OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd March 05, 2026
+.Dt DIRECTOR-SPEC 5
+.Os
+.Sh NAME
+.Nm reproduce-spec
+.Nd Reproduce specification for configuration files
+.Sh CONFIGURATION
+.Bl -tag -width xxx
+.It Sy PROJECTSDIR
+Projects directory.
+.Pp
+.Sy default: Em ~/.reproduce/projects
+.br
+.Sy command-line flag: Fl p
+.It Sy LOGSDIR
+Logs directory.
+.Pp
+.Sy default: Em ~/.reproduce/logs
+.br
+.Sy command-line flag: Fl l
+.It Sy RUNDIR
+Directory used by
+.Xr reproduce 1
+to store certain information, such as the lock file and jail names.
+.Pp
+.Sy default: Em ~/.reproduce/run
+.br
+.Sy command-line flag: Fl r
+.It Sy LOCKSDIR
+Directory used by Reproduce to store locks.
+.Pp
+.Sy default: Em /tmp/reproduce/locks
+.br
+.Sy command-line flag: Fl L
+.It Sy JAIL_PREFIX
+Prefix all jail names with this prefix.
+.Pp
+.Sy default: Em reproduce_
+.br
+.Sy command-line flag: Fl j
+.It Sy BEFORE_MAKEJAILS
+List of Makejails to include before the main instructions.
+.Pp
+.Sy command-line flag: Fl B
+.It Sy AFTER_MAKEJAILS
+List of Makejails to include after the main instructions.
+.Pp
+.Sy command-line flag: Fl A
+.It Sy MIRRORS
+Use these mirrors in all projects as the source where the images will be downloaded.
+.Pp
+Note that this parameter does not have the same effect as using
+.Sy reproduce_mirrors
+in a reproduce configuration file.
+.Sy MIRRORS
+defines the source as
+.Sy <URL>/<name>/<tag>-<arch>-image.appjail
+and
+.Sy reproduce_mirrors
+defines the source as
+.Sy <URL>/<tag>-<arch>-image.appjail Ns "."
+.Pp
+.Sy command-line flag: Fl m
+.It Sy DEBUG
+Enable debug logging.
+.Pp
+.Sy default: Em NO
+.br
+.Sy command-line flag: Fl d
+.It Sy COMPRESS_ALGO
+Compress the images using this algorithm.
+.Pp
+.Sy default: Em xz
+.br
+.Sy command-line flag: Fl C
+.El
+.Sh SPECIFICATION
+.Bl -tag -width xxx
+.It Sy name
+Image name.
+.It Sy release
+Release name.
+.Pp
+.Sy default: Em default
+.It Sy ignore_external
+Ignore Makejails defined in
+.Sy AFTER_MAKEJAILS
+and
+.Sy BEFORE_MAKEJAILS Ns "."
+.Pp
+.Sy default: Em NO
+.It Sy ignore_osarch
+Avoid using the
+.Sy osarch
+parameter of
+.Xr appjail-quick 1 Ns "."
+.Pp
+.Sy default: Em NO
+.It Sy ignore_osversion
+Avoid using the
+.Sy osversion
+of
+.Xr appjail-quick 1 Ns "."
+.It Sy ignore_release
+Avoid using the
+.Sy release
+parameter of
+.Xr appjail-quick 1 Ns "."
+.Pp
+.Sy default: Em NO
+.It Sy tags
+List of tags to build. The syntax is
+.Sy <Label Name>/<System Version> Ns "."
+If
+.Sy ignore_osversion
+has the value
+.Sy YES Ns ,
+.Sy <System Version>
+has no effect, so set it to
+.Dq ignore
+for example. Note that even if
+.Sy ignore_osversion
+is set to
+.Sy YES Ns ,
+it may be useful for the hook.
+.Pp
+.Sy default: Em latest/<Host Version>
+.It Sy arch
+List of architectures supported by the image. Note that even if
+.Sy ignore_osarch
+is set to
+.Sy YES Ns ,
+it may be useful for the hook.
+.Pp
+.Sy default: Em <Host Architecture>
+.It Sy args
+List of arguments that Reproduce will process. Note that you must add
+.Ar tag Ns Sy .args. Ar argument
+if you want to use such an argument for a specific tag, otherwise, it will be ignored.
+.It Sy remove_rc_vars
+List of
+.Xr rc.conf 5
+parameters to remove
+.Po inside the jail Pc Ns "."
+.It Sy mirrors
+List of mirrors. See also
+.Sy MIRRORS Ns "."
+.El
+.Sh SEE ALSO
+.Xr appjail 1
+.Xr reproduce 1
+.Xr appjail-template 5
+.Sh AUTHORS
+.An Jesús Daniel Colmenares Oviedo Aq Mt DtxdF@disroot.org

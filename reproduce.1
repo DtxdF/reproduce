@@ -1,0 +1,154 @@
+.\"Copyright (c) 2026, Jesús Daniel Colmenares Oviedo <DtxdF@disroot.org>
+.\"All rights reserved.
+.\"
+.\"Redistribution and use in source and binary forms, with or without
+.\"modification, are permitted provided that the following conditions are met:
+.\"
+.\"* Redistributions of source code must retain the above copyright notice, this
+.\"  list of conditions and the following disclaimer.
+.\"
+.\"* Redistributions in binary form must reproduce the above copyright notice,
+.\"  this list of conditions and the following disclaimer in the documentation
+.\"  and/or other materials provided with the distribution.
+.\"
+.\"* Neither the name of the copyright holder nor the names of its
+.\"  contributors may be used to endorse or promote products derived from
+.\"  this software without specific prior written permission.
+.\"
+.\"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+.\"AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\"IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\"DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+.\"FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\"DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\"SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\"CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\"OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+.\"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.Dd March 05, 2026
+.Dt REPRODUCE 1
+.Os
+.Sh NAME
+.Nm appjail-reproduce
+.Nd AppJail image builder
+.Sh SYNOPSIS
+.Nm
+.Fl v
+.Nm
+.Fl b
+.Op Fl dfs
+.Op Fl A Ar file
+.Op Fl B Ar file
+.Op Fl C Ar algo
+.Op Fl c Ar file
+.Op Fl j Ar prefix
+.Op Fl L Ar directory
+.Op Fl l Ar directory
+.Op Fl m Ar mirrors
+.Op Fl p Ar directory
+.Op Fl r Ar directory
+.Op Ar project Ns Oo % Ns Ar arch Ns Oo Oo , Ns Ar arch Oc No "..." Oc Ns Oo : Ns Ar tag Ns Oo Ns Oo , Ns Ar tag Oc No "..." Oc Oc Oc
+.Sh DESCRIPTION
+.Nm
+is a small open source BSD-3 licensed tool for automating the creation of images using Makejails, scripts and simple text files, providing a common workflow and simplifying many things.
+.Pp
+.Bl -tag -width xxx
+.It Fl v
+Show the version and exit.
+.It Fl b
+Build one or more projects.
+.It Fl d
+Enable debug logging.
+.Pp
+.Sy default: Em NO
+.It Fl f
+Build projects, including those marked as completed.
+.It Fl s
+Show a space-separated list of images after building them.
+.It Fl A Ar file
+List of Makejails to include after the main instructions.
+.It Fl B Ar file
+List of Makejails to include before the main instructions.
+.It Fl C Ar algo
+Compress the images using this algorithm.
+.Pp
+.Sy default: Em xz
+.It Fl c Ar file
+Configuration file.
+.Pp
+.Sy default: Em ~/.config/appjail-reproduce/config.conf
+.It Fl j Ar prefix
+Jail prefix.
+.Pp
+.Sy default: Em reproduce_
+.It Fl L Ar directory
+Locks directory.
+.Pp
+.Sy default: Em /tmp/reproduce/locks Pq if uid==0
+.br
+.Sy default: Em ~/.reproduce/locks Pq if uid!=0
+.It Fl l Ar directory
+Logs directory.
+.Pp
+.Sy default: Em ~/.reproduce/logs
+.It Fl m Ar mirrors
+List of mirrors.
+.It Fl p Ar directory
+Projects directory.
+.Pp
+.Sy default: Em ~/.reproduce/projects
+.It Fl r Ar directory
+Directory used by
+.Nm
+to store certain information, such as the lock file and jail names.
+.Pp
+.Sy default: Em ~/.reproduce/run
+.El
+.Sh REMOVING FILES
+You can specify a list of files to remove using a file named
+.Pa toremove.lst
+.No in the project directory. No
+.Nm
+will process the file line by line and pass it as arguments to
+.Xr rm 1 Ns "."
+.Pp
+.Sy WARNING: BE CAREFUL
+not to prefix the pathname with a slash or something similar.
+.Sh HOOK
+If you need more control, you can use a hook, a script named
+.Pa hook.sh
+that will run before creating the image. The hook runs in the jails directory
+.Po Sy JAILDIR No in your Xr appjail.conf 5 No configuration file Pc Ns ,
+but on the host, not inside the jail.
+.Pp
+You may need to perform some tasks even before the jail is created, so there is
+another type of hook,
+.Pa prehook.sh Ns ,
+which runs at that time. It's useful for creating a release with specific
+customization.
+.Sh ENVIRONMENT
+.Nm
+will define some environment variables when building an image intended to be used by reproduce.conf,
+.Xr appjail-makejail 5
+or the hook.
+.Bl -tag -width xxx
+.It Ev REPRODUCE_PROJECT
+Project name.
+.It Ev REPRODUCE_PROJECTDIR
+Project directory.
+.It Ev REPRODUCE_JAIL_NAME
+Jail name.
+.It Ev REPRODUCE_OSRELEASE
+OS release.
+.It Ev REPRODUCE_OSARCH
+OS architecture.
+.It Ev REPRODUCE_OSVERSION
+OS version.
+.It Ev REPRODUCE_TAG
+Tag name.
+.El
+.Sh SEE ALSO
+.Xr appjail 1
+.Xr reproduce-spec 5
+.Sh AUTHORS
+.An Jesús Daniel Colmenares Oviedo Aq Mt DtxdF@disroot.org

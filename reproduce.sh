@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2023-2025, Jesús Daniel Colmenares Oviedo <DtxdF@disroot.org>
+# Copyright (c) 2023-2026, Jesús Daniel Colmenares Oviedo <DtxdF@disroot.org>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -133,7 +133,7 @@ main()
         exit ${EX_UNAVAILABLE}
     fi
 
-    while getopts ":bdfhsvA:B:C:c:j:L:l:m:p:r:" _o; do
+    while getopts ":bdfsvA:B:C:c:j:L:l:m:p:r:" _o; do
         case "${_o}" in
             A|B|C|c|j|L|l|m|p|r)
                 if [ -z "${OPTARG}" ]; then
@@ -152,10 +152,6 @@ main()
                 ;;
             f)
                 opt_force=1
-                ;;
-            h)
-                help
-                exit ${EX_USAGE}
                 ;;
             s)
                 opt_show_images=1
@@ -931,43 +927,11 @@ get_ppid()
 usage()
 {
     cat << EOF
-usage: appjail-reproduce -h
-       appjail-reproduce -v
-       appjail-reproduce -b [-dfs] [-A include_files] [-B include_files] [-C compress]
-                         [-c config] [-j prefix] [-L locksdir] [-l logsdir] [-m mirrors]
-                         [-p projectsdir] [project[%arch1,archN][:tag1,tagN] ...]
-EOF
-}
-
-help()
-{
-    cat << EOF
-`usage`
-
-AppJail Reproduce is a small open source BSD-3 licensed tool for automating the
-creation of images using Makejails, scripts and simple text files, providing a
-common workflow and simplifying many things.
-
-Parameters:
-    -b                      -- Build one or more projects.
-    -h                      -- Show this message and exit.
-    -v                      -- Show the version and exit.
-
-Options:
-    -d                      -- Enable debug logging.
-    -f                      -- Build projects, including those marked as completed.
-    -s                      -- Show a space-separated list of images after building them.
-    -A include_files        -- List of Makejails to include after the main instructions.
-    -B include_files        -- List of Makejails to include before the main instructions.
-    -C compress             -- Compress the images using this algorithm.
-    -c config               -- Configuration file.
-    -j prefix               -- Jail prefix.
-    -L locksdir             -- Locks directory.
-    -l logsdir              -- Logs directory.
-    -m mirrors              -- List of mirrors. 
-    -p projectsdir          -- Projects directory.
-    -r rundir               -- Directory used by Reproduce to store certain information,
-                               such as the lock file and jail names.
+usage: appjail-reproduce -v
+       appjail-reproduce -b [-dfs] [-A <file>] [-B <file>] [-C <algo>] [-c <file>]
+                       [-j <prefix>] [-L <directory>] [-l <directory>] [-m <mirrors>]
+                       [-p <directory>] [-r <directory>]
+                       [<project>[%<arch>[[,<arch>] ...][:<tag>[[,<tag>] ...]]]]
 EOF
 }
 
