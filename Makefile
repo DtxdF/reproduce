@@ -5,7 +5,7 @@ RM?=rm -f
 PREFIX?=/usr/local
 MANDIR?=${PREFIX}/share/man
 
-REPRODUCE_VERSION?=0.8.0
+REPRODUCE_VERSION?=0.8.1
 
 all: install
 
