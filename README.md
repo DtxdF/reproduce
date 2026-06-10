@@ -19,13 +19,23 @@ git clone https://github.com/DtxdF/reproduce-projects.git ~/.reproduce/projects
 
 ## Installation
 
+### From ports
+
+Install via [sysutils/reproduce](https://www.freshports.org/sysutils/reproduce) port:
+
+```sh
+pkg install -y reproduce
+```
+
+### From source
+
 ```sh
 git clone https://github.com/DtxdF/reproduce.git
 cd reproduce
 make install
 ```
 
-### Note about non-root users
+#### Note about non-root users
 
 If you want to run Reproduce with a non-root user, you must [configure AppJail to do so](https://appjail.readthedocs.io/en/latest/trusted-users/).
 
