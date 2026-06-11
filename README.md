@@ -10,13 +10,6 @@ Reproduce is quite simple to use. Just tell it what project to build and it will
 appjail-reproduce -b hello
 ```
 
-The above command assumes that you have cloned the projects repository, but if you have not yet done so:
-
-```
-mkdir -p ~/.reproduce
-git clone https://github.com/DtxdF/reproduce-projects.git ~/.reproduce/projects
-```
-
 ## Installation
 
 ### From ports
@@ -81,7 +74,7 @@ appjail-reproduce -b \
 
 ### Notes
 
-The above examples are demonstrative only, it does not mean that they can be built for a specific architecture or use a specific tag. Refer to the [projects repository](https://github.com/DtxdF/reproduce-projects) or the documentation of the image you want to build.
+The above examples are demonstrative only, it does not mean that they can be built for a specific architecture or use a specific tag.
 
 ## Configuration
 
